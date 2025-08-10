@@ -4,6 +4,8 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
+const http = require("http")
+
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 
@@ -34,4 +36,6 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-module.exports = app;
+const server = http.createServer(app)
+
+server.listen(5000,()=>{console.log("app is running on port 5000")})
