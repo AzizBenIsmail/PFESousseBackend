@@ -15,6 +15,7 @@ router.get('/getCarsByYear/:year', carController.getCarsByYear);
 router.get('/getCarStats', carController.getCarStats);
 
 // Routes POST - Création et recherche
+router.post('/addCarWithOwner/:id', carController.addCarWithOwner);
 router.post('/addCar', carController.addCar);
 router.post('/addCarWithImage', uploadfile.single("car_Image"), carController.addCarWithImage);
 router.post('/getCarsByPriceRange', carController.getCarsByPriceRange);

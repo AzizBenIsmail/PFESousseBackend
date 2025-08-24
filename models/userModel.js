@@ -25,6 +25,16 @@ const userSchema = new mongoose.Schema({
   user_Image: { type: String, require: false, default: "client.png" },
   isActive: Boolean,
   isBanned: Boolean,
+  //coa
+
+  //mem
+
+  //admin
+
+  //client
+
+  car: {type : mongoose.Schema.Types.ObjectId , ref:'Car'}, //one
+  cars: [{type : mongoose.Schema.Types.ObjectId , ref:'Car'}] //many
 },{timestamps:true});
 
 userSchema.pre('save',async function (next) {

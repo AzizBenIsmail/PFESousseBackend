@@ -170,3 +170,23 @@ module.exports.addClientWithImage = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+module.exports.updateUser = async (req, res) => {
+  try {
+    const { id } = req.params; //get d id from params
+    const { firstName, lastName, age, email } = req.body;
+
+    const checkIfUserExists = await userModel.findById(id);
+    if (!checkIfUserExists) {
+      throw new Error("uesr not found !");
+    }
+
+    updatedUser = await userModel.findByIdAndUpdate(id, {
+      $set: { firstName, lastName, age, email },
+    });
+
+    res.status(200).json({ updatedUser });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

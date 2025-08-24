@@ -316,3 +316,67 @@ module.exports.getCarStats = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+const userModel = require("../models/userModel");
+
+module.exports.addCarWithOwner = async (req, res) => {
+  try {
+    const carData = req.body;
+    const idOwner = req.params.id;
+    carData.owner = idOwner
+    // Vérifier si le matricule existe déjà
+    const existingCar = await carModel.findOne({ matricule: carData.matricule.toUpperCase() });
+    if (existingCar) {
+      return res.status(400).json({ message: "Une voiture avec ce matricule existe déjà" });
+    }
+    
+    const car = new carModel(carData);
+    const addedCar = await car.save();
+    
+    await userModel.findByIdAndUpdate(idOwner,{
+      //$set :{car : addedCar._id}
+      $push : {cars : addedCar._id}
+    })
+
+    res.status(201).json({ addedCar });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports.affectCarToUser = async (req, res) => {
+  try {
+    const { carID,ownerID } = req.body;
+    
+    const user = await userModel.findById(ownerID)
+    if(!user){
+        throw new Error("user not found");        
+    }
+
+    const car = await carModel.findById(carID)
+    if(!car){
+        throw new Error("car not found");        
+    }
+
+    await carModel.findByIdAndUpdate(carID,{
+        $set: { owner : ownerID}
+        
+    })
+    await userModel.findByIdAndUpdate(ownerID,{
+        //$set: { car : carID}
+        $push : {cars : carID}
+    })
+
+    res.status(201).json({
+      success: true,
+      message: 'Voiture créée avec succès',
+      data: "affected"
+    });
+  } catch (error) {
+    console.error('Erreur lors de la création de la voiture:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Erreur lors de la création de la voiture',
+      error: error.message
+    });
+  }
+};

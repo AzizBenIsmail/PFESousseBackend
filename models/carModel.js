@@ -71,6 +71,9 @@ const carSchema = new mongoose.Schema({
     type: String,
     trim: true,
   }],
+  owner: {type : mongoose.Schema.Types.ObjectId , ref:'User'}, //one
+//  owners: [{type : mongoose.Schema.Types.ObjectId , ref:'User'}] //Many
+
 }, { timestamps: true });
 
 // Index pour améliorer les performances de recherche
