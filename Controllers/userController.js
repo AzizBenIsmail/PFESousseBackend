@@ -13,7 +13,7 @@ module.exports.esmFonction = async (req, res) => {
 module.exports.getAllUsers = async (req, res) => {
   try {
     //logique
-    const usersList = await userModel.find();
+    const usersList = await userModel.find().populate("cars");
     res.status(200).json({ usersList });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -30,6 +30,16 @@ module.exports.getUserById = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+module.exports.getAuthUser = async (req, res) => {
+  try {  
+    const user = await userModel.findById(req.user._id);
+    res.status(200).json({ user });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 
 module.exports.getUserByAge = async (req, res) => {
   try {
@@ -51,8 +61,7 @@ module.exports.getUserBetweenAgeXAndY = async (req, res) => {
     const minAge = req.body.minAge;
     const maxAge = req.body.maxAge;
 
-    
-    if (isNaN(minAge)||  isNaN(maxAge)) {
+    if (isNaN(minAge) || isNaN(maxAge)) {
       throw new Error("minAge is null");
     }
 
@@ -93,9 +102,9 @@ module.exports.addClient = async (req, res) => {
 module.exports.getAllUsersSortedByFirstName = async (req, res) => {
   try {
     //logique
-    const usersList = await userModel.find().sort({firstName:-1})
-    const count = usersList.length
-    res.status(200).json({count, usersList});
+    const usersList = await userModel.find().sort({ firstName: -1 });
+    const count = usersList.length;
+    res.status(200).json({ count, usersList });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -104,8 +113,7 @@ module.exports.getAllUsersSortedByFirstName = async (req, res) => {
 module.exports.searchUsersByFirstName = async (req, res) => {
   // ?name=John
   try {
-
-        const { firstName } = req.body;
+    const { firstName } = req.body;
 
     if (!firstName) {
       throw new Error("Please select a name");
@@ -151,16 +159,15 @@ module.exports.addClientV2 = async (req, res) => {
   }
 };
 
-
 module.exports.addClientWithImage = async (req, res) => {
   try {
     //logique
     const userData = req.body;
     userData.role = "client";
 
-    if(req.file){
-        const {filename} = req.file
-        userData.user_Image= filename
+    if (req.file) {
+      const { filename } = req.file;
+      userData.user_Image = filename;
     }
 
     const user = new userModel(userData);
@@ -186,6 +193,58 @@ module.exports.updateUser = async (req, res) => {
     });
 
     res.status(200).json({ updatedUser });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const carModel = require("../models/carModel");
+
+module.exports.deleteUserByIdandRelation = async (req, res) => {
+  try {
+    //logique
+    const id = req.params.id;
+    const user = await userModel.findByIdAndDelete(id);
+
+    await carModel.updateMany({ owner: id }, { $unset: { owner: "" } });
+
+    res.status(200).json("deleted");
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const jwt = require("jsonwebtoken");
+const maxAge = 1 * 60; //1min
+
+const createToken = (id) => {
+  return jwt.sign({ id }, "net sousse secret", { expiresIn: maxAge });
+};
+
+module.exports.login = async (req, res) => {
+  try {
+    //logique
+    const { email, password } = req.body;
+    const user = await userModel.login(email, password);
+
+    const token = createToken(user._id);
+    res.cookie("tokenJwt", token, { httpOnly: false, maxAge: maxAge * 1000 });
+
+    res
+      .status(200)
+      .json({ message: "User successfully authenticated", user: user });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports.logout = async (req, res) => {
+  try {
+    //logique
+
+    res.cookie("tokenJwt", "", { httpOnly: false, maxAge: 1 });
+
+    res.status(200).json({ message: "User successfully logged out" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

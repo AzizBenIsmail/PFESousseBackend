@@ -33,7 +33,7 @@ const userSchema = new mongoose.Schema({
 
   //client
 
-  car: {type : mongoose.Schema.Types.ObjectId , ref:'Car'}, //one
+  //car: {type : mongoose.Schema.Types.ObjectId , ref:'Car'}, //one
   cars: [{type : mongoose.Schema.Types.ObjectId , ref:'Car'}] //many
 },{timestamps:true});
 
@@ -46,9 +46,21 @@ userSchema.pre('save',async function (next) {
     next()
   } catch (error) {
     next(error)
-  }
-  
+  }  
 })
+
+userSchema.statics.login = async function (email , password) {
+  const user = await this.findOne({email})
+  if(user){
+    const auth = await bcrypt.compare(password, user.password)    
+    if(auth){
+      return user
+    }
+    throw new Error('incorrect password')
+  }
+  throw new Error("incorrect email");
+
+}
 
 const User = mongoose.model("User",userSchema)
 module.exports= User;

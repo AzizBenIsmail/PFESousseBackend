@@ -72,7 +72,8 @@ const carSchema = new mongoose.Schema({
     trim: true,
   }],
   owner: {type : mongoose.Schema.Types.ObjectId , ref:'User'}, //one
-//  owners: [{type : mongoose.Schema.Types.ObjectId , ref:'User'}] //Many
+
+  //  owners: [{type : mongoose.Schema.Types.ObjectId , ref:'User'}] //Many
 
 }, { timestamps: true });
 

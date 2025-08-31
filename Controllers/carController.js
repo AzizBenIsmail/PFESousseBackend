@@ -3,7 +3,7 @@ const carModel = require("../models/carModel");
 // Récupérer toutes les voitures
 module.exports.getAllCars = async (req, res) => {
   try {
-    const carsList = await carModel.find();
+    const carsList = await carModel.find().populate('owner');
     res.status(200).json({ carsList });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -378,5 +378,61 @@ module.exports.affectCarToUser = async (req, res) => {
       message: error.message || 'Erreur lors de la création de la voiture',
       error: error.message
     });
+  }
+};
+
+module.exports.desaffectCarToUser = async (req, res) => {
+  try {
+    const { carID,ownerID } = req.body;
+    
+    const user = await userModel.findById(ownerID)
+    if(!user){
+        throw new Error("user not found");        
+    }
+
+    const car = await carModel.findById(carID)
+    if(!car){
+        throw new Error("car not found");        
+    }
+
+    await carModel.findByIdAndUpdate(carID,{
+        $unset: { owner : ""}        
+    })
+
+    await userModel.findByIdAndUpdate(ownerID,{
+        //$set: { car : carID}
+        $pull : {cars : carID}
+    })
+
+    res.status(201).json({
+      success: true,
+      message: 'Voiture créée avec succès',
+      data: "affected"
+    });
+  } catch (error) {
+    console.error('Erreur lors de la création de la voiture:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Erreur lors de la création de la voiture',
+      error: error.message
+    });
+  }
+};
+
+// Supprimer une voiture
+module.exports.deleteCarById = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const car = await carModel.findByIdAndDelete(id);
+    
+    if (!car) {
+      return res.status(404).json({ message: "Voiture non trouvée" });
+    }
+    
+    await userModel.updateMany({},{$pull : {cars : id}})
+
+    res.status(200).json({ message: "Voiture supprimée avec succès", deletedCar: car });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
